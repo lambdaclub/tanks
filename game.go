@@ -2,7 +2,7 @@ package tanks
 
 import "errors"
 
-type MapCell char
+type MapCell byte
 
 const (
 	Ground MapCell = '.'
@@ -33,6 +33,9 @@ func NewGameMap(height, width int) *GameMap {
 		Cells:  make([][]MapCell, height)}
 	for i := 0; i < height; i++ {
 		gameMap.Cells[i] = make([]MapCell, width)
+		for j := 0; j < width; j++ {
+			gameMap.Cells[i][j] = Ground
+		}
 	}
 	return &gameMap
 }
@@ -70,15 +73,16 @@ func (c *MoveCommand) Handle(gameState *GameState) error {
 	if player == nil {
 		return errors.New("no such player")
 	}
-	if c.DX < -1 || c.DX > 1 || c.DY < -1 || c.DY > 1 || (c.DX == 0 && c.DY == 0) {
-		return errors.New("invalid DX, DY")
+	if c.DX < -1 || c.DX > 1 || c.DY < -1 || c.DY > 1 ||
+		(c.DX != 0 && c.DY != 0) || (c.DX == 0 && c.DY == 0) {
+		return errors.New("invalid movement")
 	}
 	newX := player.X + c.DX
 	newY := player.Y + c.DY
 	if newX < 0 || newX >= gameState.Map.Width || newY < 0 || newY >= gameState.Map.Height {
 		return errors.New("invalid movement")
 	}
-	if !c.CanMoveTo(gameState.Map[newY][newX]) {
+	if !c.CanMoveTo(gameState.Map.Cells[newY][newX]) {
 		return errors.New("invalid movement")
 	}
 	for name, player := range gameState.Players {
